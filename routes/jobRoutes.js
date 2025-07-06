@@ -6,14 +6,19 @@ const {
   deleteJob
 } = require('../controllers/jobController');
 
+const { protect, admin } = require('../middleware/authMiddleware');
+
 const router = express.Router();
 
+// Public
+router.route('/').get(getJobs);
+
+// Admin Only
 router.route('/')
-  .get(getJobs)
-  .post(createJob); // Later: add authMiddleware
+  .post(protect, admin, createJob);
 
 router.route('/:id')
-  .put(updateJob)
-  .delete(deleteJob);
+  .put(protect, admin, updateJob)
+  .delete(protect, admin, deleteJob);
 
 module.exports = router;

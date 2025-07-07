@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const jobRoutes = require('./routes/jobRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const migrationRoutes = require('./routes/migrationRoutes');
+const storyRoutes = require('./routes/storyRoutes');
 
 dotenv.config();
 connectDB();
@@ -28,3 +29,4 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 app.use('/api/v1/jobs', jobRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/migrations', migrationRoutes);
+app.use('/api/v1/stories', storyRoutes);

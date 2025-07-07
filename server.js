@@ -38,6 +38,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const jobRoutes = require('./routes/jobRoutes');
+const courseRoutes = require('./routes/courseRoutes');
 
 dotenv.config();
 connectDB();
@@ -59,3 +60,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 app.use('/api/v1/jobs', jobRoutes);
+app.use('/api/v1/courses', courseRoutes);

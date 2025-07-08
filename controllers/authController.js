@@ -21,6 +21,7 @@ exports.registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      role: user.role,
       token: generateToken(user),
     });
   } catch (err) {
@@ -46,6 +47,7 @@ exports.loginUser = async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      role: user.role,
       token: generateToken(user),
     });
   } catch (err) {

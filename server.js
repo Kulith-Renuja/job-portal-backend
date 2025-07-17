@@ -8,6 +8,7 @@ const migrationRoutes = require('./routes/migrationRoutes');
 const storyRoutes = require('./routes/storyRoutes');
 const countryRoutes = require('./routes/countryRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const usermanageRoutes = require('./routes/usermanageRoutes');
 
 dotenv.config();
 connectDB();
@@ -35,3 +36,4 @@ app.use('/api/v1/stories', storyRoutes);
 app.use('/api/v1/countries', countryRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/dashboard', require('./routes/adminRoutes'));
+app.use('/api/v1/usermanage', usermanageRoutes);

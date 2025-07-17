@@ -34,3 +34,4 @@ app.use('/api/v1/migrations', migrationRoutes);
 app.use('/api/v1/stories', storyRoutes);
 app.use('/api/v1/countries', countryRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/dashboard', require('./routes/adminRoutes'));

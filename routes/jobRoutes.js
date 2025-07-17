@@ -5,9 +5,7 @@ const {
   updateJob,
   deleteJob
 } = require('../controllers/jobController');
-
 const { protect, admin } = require('../middleware/authMiddleware');
-
 const router = express.Router();
 
 // Public

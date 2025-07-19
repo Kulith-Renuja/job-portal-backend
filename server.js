@@ -15,15 +15,15 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // Routes
 app.use('/api/v1/auth', require('./routes/authRoutes'));
-
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
 
 const PORT = process.env.PORT || 5000;
 
@@ -37,3 +37,8 @@ app.use('/api/v1/countries', countryRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/dashboard', require('./routes/adminRoutes'));
 app.use('/api/v1/usermanage', usermanageRoutes);
+
+// Test route (keep last)
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});

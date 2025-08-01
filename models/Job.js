@@ -9,11 +9,9 @@ const jobSchema = new mongoose.Schema(
     },
     place: {
       type: String,
-      required: true
     },
     company: {
       type: String,
-      required: true
     },
     category: {
       type: String,
@@ -25,6 +23,18 @@ const jobSchema = new mongoose.Schema(
     },
     image: {
       type: String // URL or file path
+    },
+    salary: {
+      type: Number, // or String if you want 'Negotiable'
+      default: null
+    },
+    jobType: {
+      type: String, // e.g., 'Full-time', 'Part-time', 'Internship'
+      enum: ['Full-time', 'Part-time', 'Internship', 'Contract'],
+      default: 'Full-time'
+    },
+    deadline: {
+      type: Date
     }
   },
   {

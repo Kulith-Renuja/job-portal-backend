@@ -35,6 +35,18 @@ const jobSchema = new mongoose.Schema(
     },
     deadline: {
       type: Date
+    },
+    // Education requirements
+    requiredEducationLevel: {
+      type: String,
+      enum: ['high-school', 'diploma', 'bachelor', 'master', 'doctorate']
+    },
+    requiredFieldOfStudy: {
+      type: String,
+      trim: true
+    },
+    minGraduationYear: {
+      type: Number
     }
   },
   {

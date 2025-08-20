@@ -11,9 +11,9 @@ const router = express.Router();
 // Public
 router.route('/').get(getJobs);
 
-// Admin Only
+// Admin and Company routes
 router.route('/')
-  .post(protect, admin, createJob);
+  .post(protect, createJob);
 
 router.route('/:id')
   .put(protect, admin, updateJob)

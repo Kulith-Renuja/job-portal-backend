@@ -1,4 +1,5 @@
 const Job = require('../models/Job');
+const Company = require('../models/Company');
 
 // @desc    Get all jobs
 // @route   GET /api/v1/jobs
@@ -14,12 +15,45 @@ exports.getJobs = async (req, res) => {
 
 // @desc    Create new job
 // @route   POST /api/v1/jobs
-// @access  Private/Admin
+// @access  Private/Company
 exports.createJob = async (req, res) => {
-  const { title, place, company, category, content, image } = req.body;
+  const { title, place, company, category, content, image,
+    requiredEducationLevel, requiredFieldOfStudy, minGraduationYear } = req.body;
 
   try {
-    const job = await Job.create({ title, place, company, category, content, image });
+    // Check if user is a company
+    if (req.user.role !== 'company') {
+      return res.status(403).json({ message: 'Only companies can post jobs' });
+    }
+
+    // Check if company is approved
+    const companyRecord = await Company.findOne({ user: req.user._id });
+    if (!companyRecord || companyRecord.status !== 'approved') {
+      return res.status(403).json({ message: 'Company not approved to post jobs' });
+    }
+
+    // Check if company can post (free posts remaining)
+    if (companyRecord.freePostsRemaining <= 0) {
+      return res.status(403).json({ message: 'No free posts remaining' });
+    }
+
+    // Create job
+    const job = await Job.create({
+      title,
+      place,
+      company: companyRecord.companyName,
+      category,
+      content,
+      image,
+      requiredEducationLevel,
+      requiredFieldOfStudy,
+      minGraduationYear
+    });
+
+    // Decrement free posts count
+    companyRecord.freePostsRemaining -= 1;
+    await companyRecord.save();
+
     res.status(201).json(job);
   } catch (err) {
     res.status(500).json({ message: 'Failed to create job', error: err.message });

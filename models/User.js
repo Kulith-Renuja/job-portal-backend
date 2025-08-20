@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    unique: true
   },
   email: {
     type: String,
@@ -25,13 +26,52 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'company', 'admin'],
     default: 'user'
   },
   status: {
     type: String,
     enum: ['active', 'flagged', 'deactivated'],
     default: 'active'
+  },
+  // Company specific fields (only for company users)
+  companyName: {
+    type: String,
+    trim: true
+  },
+  registrationNumber: {
+    type: String,
+    trim: true
+  },
+  address: {
+    type: String,
+    trim: true
+  },
+  contactPerson: {
+    type: String,
+    trim: true
+  },
+  website: {
+    type: String,
+    trim: true
+  },
+  industry: {
+    type: String,
+    trim: true
+  },
+  companySize: {
+    type: String,
+    trim: true
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  // Company approval status
+  companyStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
   }
 }, {
   timestamps: true

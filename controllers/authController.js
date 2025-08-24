@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Company = require('../models/Company');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Register new user
@@ -23,6 +22,7 @@ exports.registerUser = async (req, res) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      status: user.status,
       token: generateToken(user),
     });
   } catch (err) {
@@ -58,21 +58,9 @@ exports.registerCompany = async (req, res) => {
       return res.status(400).json({ message: 'Phone number already registered' });
     }
 
-    // Check if email already exists
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).json({ message: 'Email already registered' });
-    }
-
-    // Check if registration number already exists
-    const existingReg = await Company.findOne({ registrationNumber });
-    if (existingReg) {
-      return res.status(400).json({ message: 'Company registration number already registered' });
-    }
-
     // Create user first with company role
     const user = await User.create({ 
-      name, 
+      name :companyName, 
       email: contactEmail, 
       phone: contactPhone, 
       password,
@@ -81,21 +69,6 @@ exports.registerCompany = async (req, res) => {
       registrationNumber,
       address,
       contactPerson,
-      website,
-      industry,
-      companySize,
-      description
-    });
-
-    // Create company record
-    const company = await Company.create({
-      user: user._id,
-      companyName,
-      registrationNumber,
-      address,
-      contactPerson,
-      contactPhone,
-      contactEmail,
       website,
       industry,
       companySize,
@@ -135,6 +108,7 @@ exports.loginUser = async (req, res) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      companyStatus: user.companyStatus,
       token: generateToken(user),
     });
   } catch (err) {

@@ -50,6 +50,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  contactPhone: { 
+    type: String,
+    trim: true 
+  }, // company landline
+  contactEmail: { 
+    type: String,
+    lowercase: true,
+    trim: true 
+  }, // company contact email
   website: {
     type: String,
     trim: true
@@ -71,6 +80,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
+  },
+  freePostsRemaining: { 
+    type: Number, 
+    default: 3
+  },
+  lastFreePostReset: { 
+    type: Date, 
+    default: Date.now 
   }
 }, {
   timestamps: true

@@ -35,16 +35,16 @@ exports.registerUser = async (req, res) => {
 // @access  Public
 exports.registerCompany = async (req, res) => {
   const { 
-    name, 
-    email, 
-    phone, 
-    password,
-    companyName,
-    registrationNumber,
-    address,
-    contactPerson,
-    contactPhone,
-    contactEmail,
+    name,
+    email, // optional account email (not unique)
+    phone, // REQUIRED: login phone (unique)
+    password, // REQUIRED
+    companyName, // REQUIRED
+    registrationNumber, // REQUIRED (not unique by your rule)
+    address, // REQUIRED
+    contactPerson, // REQUIRED
+    contactPhone, // optional company landline
+    contactEmail, // optional company contact email
     website,
     industry,
     companySize,
@@ -59,20 +59,29 @@ exports.registerCompany = async (req, res) => {
     }
 
     // Create user first with company role
+    // Notes:
+    // - phone is the login phone
+    // - contactPhone/contactEmail are company contacts (optional)
+    // - freePostsRemaining and lastFreePostReset require fields in your User schema
     const user = await User.create({ 
-      name :companyName, 
-      email: contactEmail, 
-      phone: contactPhone, 
+      name :name || contactPerson || companyName, // fallback to any available name
+      email: email || '',               // account email (optional, not unique)
+      phone, // login phone (unique)
       password,
       role: 'company',
+      companyStatus: 'pending',
       companyName,
       registrationNumber,
       address,
       contactPerson,
+      contactPhone: contactPhone || '',
+      contactEmail,
       website,
       industry,
       companySize,
-      description
+      description,
+      freePostsRemaining: 3,
+      lastFreePostReset: new Date()
     });
 
     res.status(201).json({
@@ -82,6 +91,7 @@ exports.registerCompany = async (req, res) => {
       phone: user.phone,
       role: user.role,
       companyStatus: user.companyStatus,
+      companyId: user._id,            // since you use a single model
       token: generateToken(user),
     });
   } catch (err) {
@@ -103,12 +113,13 @@ exports.loginUser = async (req, res) => {
     }
 
     res.json({
-      _id: user._id,
+     _id: user._id,
       name: user.name,
       email: user.email,
       phone: user.phone,
       role: user.role,
-      companyStatus: user.companyStatus,
+      companyStatus: user.companyStatus,           // defined for company accounts
+      companyId: user.role === 'company' ? user._id : null, // single-model: companyId is user._id
       token: generateToken(user),
     });
   } catch (err) {

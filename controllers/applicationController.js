@@ -1,6 +1,5 @@
 const Application = require('../models/Application');
 const Job = require('../models/Job');
-const Company = require('../models/Company');
 const { sendApplicationNotification, sendApplicationConfirmation } = require('../utils/emailService');
 
 // @desc    Submit job application

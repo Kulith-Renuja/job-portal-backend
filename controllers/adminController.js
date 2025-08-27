@@ -4,7 +4,6 @@ const Course = require('../models/Course');
 const Migration = require('../models/Migration');
 const Story = require('../models/Story');
 const Country = require('../models/Country');
-const Company = require('../models/Company');
 
 exports.getDashboardStats = async (req, res) => {
   try {

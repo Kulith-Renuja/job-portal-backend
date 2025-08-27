@@ -3,32 +3,22 @@ const User = require('../models/User');
 
 // Middleware: Verify JWT token
 exports.protect = async (req, res, next) => {
-  let token;
+let token;
 
-  // Check if Authorization header exists and starts with Bearer
-  // Token should come in Authorization header as: Bearer token
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      // Get the token (remove "Bearer " from the start)
-      token = req.headers.authorization.split(' ')[1];
+if (req.headers.authorization && req.headers.authorization.toLowerCase().startsWith('bearer ')) {
+token = req.headers.authorization.split(' ')[1];
+}
+if (!token) return res.status(401).json({ message: 'Not authorized, no token' });
 
-      // Decode token using secret key (from .env)
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Attach user info to the request, except password
-      req.user = await User.findById(decoded.id).select('-password'); // attach user info (no password)
-
-      // Go to next middleware or controller
-      next();
-    } catch (err) {
-      return res.status(401).json({ message: 'Not authorized, token failed' });
-    }
-  }
-
-  // If no token found in Authorization header
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
-  }
+try {
+const decoded = jwt.verify(token, process.env.JWT_SECRET);
+const user = await User.findById(decoded.id).select('-password');
+if (!user) return res.status(401).json({ message: 'User not found' });
+req.user = user;
+next();
+} catch (err) {
+return res.status(401).json({ message: 'Not authorized, token failed' });
+}
 };
 
 // Middleware: Check if user is admin

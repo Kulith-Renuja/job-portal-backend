@@ -7,13 +7,13 @@ const Country = require('../models/Country');
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    const jobs = await Job.countDocuments();
+    const jobs = await User.countDocuments({ role: 'user' });
     const users = await User.countDocuments();
     const courses = await Course.countDocuments();
     const migrations = await Migration.countDocuments();
     const stories = await Story.countDocuments();
     const countries = await Country.countDocuments();
-    const companies = await Company.countDocuments();
+    const companies = await User.countDocuments({ role: 'company' });
 
     res.json({ jobs, users, courses, migrations, stories, countries, companies });
   } catch (err) {

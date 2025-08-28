@@ -13,8 +13,8 @@ const jobSchema = new mongoose.Schema(
         // ⭐ Replaced the company name string with a reference to the User/Company ID
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'User' // Assuming your company user is in the 'User' collection
+            ref: 'User',
+            required: true
         },
         // ✅ Add a field to store the company name for easier front-end display.
         // This is a "denormalized" field for performance.

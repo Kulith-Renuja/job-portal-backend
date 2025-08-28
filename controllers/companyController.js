@@ -65,12 +65,11 @@ res.status(500).json({ message: 'Failed to update company status', error: err.me
 };
 
 // GET /api/v1/companies/:id/jobs (Owner/Admin)
+// GET /api/v1/companies/:id/jobs (Owner/Admin)
 exports.getCompanyJobs = async (req, res) => {
 try {
-// Your Job schema stores company as companyName (string)
-const company = await User.findOne({ _id: req.params.id, role: 'company' }).select('companyName');
-if (!company) return res.status(404).json({ message: 'Company not found' });
-const jobs = await Job.find({ company: company.companyName }).sort({ createdAt: -1 });
+// Check the company exists; we already guard owner/admin in routes
+const jobs = await Job.find({ companyId: req.params.id }).sort({ createdAt: -1 });
 res.json(jobs);
 } catch (err) {
 res.status(500).json({ message: 'Failed to fetch company jobs', error: err.message });

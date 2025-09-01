@@ -10,17 +10,24 @@ const jobSchema = new mongoose.Schema(
         place: {
             type: String,
         },
-        // ⭐ Replaced the company name string with a reference to the User/Company ID
+        // Who this job belongs to (User._id - admin or company)
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
         },
-        // ✅ Add a field to store the company name for easier front-end display.
-        // This is a "denormalized" field for performance.
+        // Display name of employer (admin-provided or companyName)
         companyName: {
             type: String,
             required: true
+        },
+        // Where applications should be sent (admin can set on create; company can set later)
+        applicationEmail: {
+            type: String,
+            trim: true,
+            lowercase: true,
+            // light validation; keep simple to avoid over-rejecting valid emails
+            match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid application email']
         },
         category: {
             type: String,

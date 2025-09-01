@@ -1,154 +1,113 @@
-const Application = require('../models/Application');
 const Job = require('../models/Job');
+const User = require('../models/User');
 const { sendApplicationNotification, sendApplicationConfirmation } = require('../utils/emailService');
 
-// @desc    Submit job application
-// @route   POST /api/v1/applications
-// @access  Public
+const EDUCATION_ORDER = { 'high-school': 1, diploma: 2, bachelor: 3, master: 4, doctorate: 5 };
+
+function parseEducation(body) {
+if (body.education && body.education.level) return body.education;
+return {
+level: (body['education[level]'] || '').toLowerCase(),
+institution: body['education[institution]'] || '',
+fieldOfStudy: body['education[fieldOfStudy]'] || '',
+graduationYear: body['education[graduationYear]'] || ''
+};
+}
+
 exports.submitApplication = async (req, res) => {
-  try {
-    // Extract data from request
-    const {
-      jobId,
-      name,
-      email,
-      phone,
-      education,
-      experience,
-      coverLetter
-    } = req.body;
-
-    // Check if job exists
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
-    }
-
-    // Check if company exists and is approved
-    const company = await Company.findOne({ companyName: job.company });
-    if (!company || company.status !== 'approved') {
-      return res.status(400).json({ message: 'Company not approved to receive applications' });
-    }
-
-    // Handle CV upload if present
-    let cvUrl = null;
-    if (req.file) {
-      cvUrl = req.file.path; // Assuming you're using multer for file uploads
-    }
-
-    // Create application record
-    const application = await Application.create({
-      job: jobId,
-      name,
-      email,
-      phone,
-      education,
-      experience: experience || 0,
-      coverLetter,
-      cv: cvUrl
-    });
-
-    // Send emails
-    // Send notification to company
-    const companyNotificationResult = await sendApplicationNotification(
-      company.contactEmail,
-      { name, email, phone, education, experience, coverLetter },
-      { title: job.title, company: job.company }
-    );
-
-    // Send confirmation to applicant
-    const applicantConfirmationResult = await sendApplicationConfirmation(
-      email,
-      { title: job.title, company: job.company }
-    );
-
-    res.status(201).json({
-      message: 'Application submitted successfully',
-      application,
-      emails: {
-        companyNotification: companyNotificationResult,
-        applicantConfirmation: applicantConfirmationResult
-      }
-    });
-  } catch (err) {
-    console.error('Application submission error:', err);
-    res.status(500).json({ message: 'Failed to submit application', error: err.message });
-  }
+try {
+const edu = parseEducation(req.body);
+const payload = {
+jobId: req.body.jobId,
+name: req.body.name,
+email: req.body.email,
+phone: req.body.phone,
+education: {
+level: String(edu.level || '').toLowerCase(),
+institution: edu.institution,
+fieldOfStudy: edu.fieldOfStudy,
+graduationYear: Number(edu.graduationYear || 0)
+},
+experience: Number(req.body.experience || 0),
+coverLetter: req.body.coverLetter || ''
 };
+// 1) Job
+const job = await Job.findById(payload.jobId);
+if (!job) return res.status(404).json({ message: 'Job not found' });
 
-// @desc    Get job applications
-// @route   GET /api/v1/applications/job/:jobId
-// @access  Private
-exports.getJobApplications = async (req, res) => {
-  try {
-    const applications = await Application.find({ job: req.params.jobId })
-      .populate('job', 'title company');
-    
-    res.json(applications);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch applications', error: err.message });
-  }
-};
+// 2) Determine recipient
+// Priority: job.applicationEmail (admin or company can set)
+let recipient = (job.applicationEmail || '').trim();
 
-// @desc    Get filtered applications for company
-// @route   GET /api/v1/applications/company/:companyId/filtered
-// @access  Private
-exports.getFilteredApplications = async (req, res) => {
-  try {
-    // Get all jobs for this company
-    const jobs = await Job.find({ company: req.params.companyId });
-    const jobIds = jobs.map(job => job._id);
-    
-    // Get all applications for these jobs
-    const applications = await Application.find({ job: { $in: jobIds } })
-      .populate('job', 'title company requiredEducationLevel requiredFieldOfStudy minGraduationYear');
-    
-    // Filter applications based on job requirements
-    const filteredApplications = applications.filter(application => {
-      const job = application.job;
-      
-      // If job has no specific requirements, include all applications
-      if (!job.requiredEducationLevel && !job.requiredFieldOfStudy && !job.minGraduationYear) {
-        return true;
-      }
-      
-      // Check education level requirement
-      if (job.requiredEducationLevel) {
-        const educationHierarchy = {
-          'high-school': 1,
-          'diploma': 2,
-          'bachelor': 3,
-          'master': 4,
-          'doctorate': 5
-        };
-        
-        const requiredLevel = educationHierarchy[job.requiredEducationLevel] || 0;
-        const applicantLevel = educationHierarchy[application.education.level] || 0;
-        
-        if (applicantLevel < requiredLevel) {
-          return false;
-        }
-      }
-      
-      // Check field of study requirement
-      if (job.requiredFieldOfStudy && application.education.fieldOfStudy) {
-        if (!application.education.fieldOfStudy.toLowerCase().includes(job.requiredFieldOfStudy.toLowerCase())) {
-          return false;
-        }
-      }
-      
-      // Check graduation year requirement
-      if (job.minGraduationYear && application.education.graduationYear) {
-        if (parseInt(application.education.graduationYear) < parseInt(job.minGraduationYear)) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
-    
-    res.json(filteredApplications);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch filtered applications', error: err.message });
+// If not provided, fallback to job owner
+if (!recipient && job.companyId) {
+  const owner = await User.findById(job.companyId).select('role contactEmail email companyName name');
+  if (owner) {
+    // For company role: prefer contactEmail, else account email
+    if (owner.role === 'company') {
+      recipient = owner.contactEmail || owner.email || '';
+    } else if (owner.role === 'admin') {
+      // For admin postings without applicationEmail, fallback to admin email
+      recipient = owner.email || '';
+    }
   }
+}
+if (!recipient) {
+  return res.status(400).json({ message: 'No application recipient configured for this job' });
+}
+
+// 3) Education filter
+const reqLevel = (job.requiredEducationLevel || '').toLowerCase();
+const minLevel = EDUCATION_ORDER[reqLevel] || 0;
+const applLevel = EDUCATION_ORDER[payload.education.level] || 0;
+const meetsLevel = applLevel >= minLevel;
+
+let meetsField = true;
+if (job.requiredFieldOfStudy) {
+  const reqField = String(job.requiredFieldOfStudy).toLowerCase();
+  const applField = String(payload.education.fieldOfStudy || '').toLowerCase();
+  meetsField = applField.includes(reqField);
+}
+
+let meetsGrad = true;
+if (job.minGraduationYear) {
+  meetsGrad = Number(payload.education.graduationYear || 0) >= Number(job.minGraduationYear);
+}
+
+const meets = meetsLevel && meetsField && meetsGrad;
+
+// 4) Attach CV (memory)
+const attachments = [];
+if (req.file) {
+  attachments.push({
+    filename: req.file.originalname,
+    content: req.file.buffer,
+    contentType: req.file.mimetype
+  });
+}
+
+// 5) Email
+if (meets) {
+  await sendApplicationNotification(
+    recipient,
+    payload,
+    { title: job.title, company: job.companyName || 'Company' },
+    attachments
+  );
+}
+await sendApplicationConfirmation(
+  payload.email,
+  { title: job.title, company: job.companyName || 'Company' }
+);
+
+return res.status(201).json({
+  message: meets
+    ? 'Application submitted and sent to company'
+    : 'Application submitted (did not match requirements; not sent to company)',
+  meetsEducation: meets
+});
+} catch (err) {
+console.error('Application submission error:', err);
+res.status(500).json({ message: 'Failed to submit application', error: err.message });
+}
 };

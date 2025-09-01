@@ -1,36 +1,35 @@
 const express = require('express');
 const multer = require('multer');
-const {
-  submitApplication,
-  getJobApplications,
-  getFilteredApplications
-} = require('../controllers/applicationController');
+const { submitApplication } = require('../controllers/applicationController');
 const { protect } = require('../middleware/authMiddleware');
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname)
-  }
-});
-
-const upload = multer({ storage: storage });
 
 const router = express.Router();
 
-// Submit job application
-router.route('/')
-  .post(upload.single('cv'), submitApplication);
+function candidateOnly(req, res, next) {
+if (req.user?.role !== 'user') {
+return res.status(403).json({ message: 'Only candidates can apply' });
+}
+next();
+}
 
-// Get applications for a job
-router.route('/job/:jobId')
-  .get(protect, getJobApplications);
+const upload = multer({
+storage: multer.memoryStorage(),
+limits: { fileSize: 5 * 1024 * 1024 },
+fileFilter: (req, file, cb) => {
+const ok = [
+'application/pdf',
+'application/msword',
+'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+].includes(file.mimetype);
+cb(ok ? null : new Error('Invalid file type (PDF/DOC/DOCX only)'), ok);
+}
+});
 
-// Get filtered applications for a company
-router.route('/company/:companyId/filtered')
-  .get(protect, getFilteredApplications);
+// Submit job application (login required; candidate only)
+router.post('/', protect, candidateOnly, upload.single('cv'), submitApplication);
+
+// (Optional) If you’re not storing applications, consider removing or stubbing these:
+// router.get('/job/:jobId', protect, (req, res) => res.status(501).json({ message: 'Not implemented' }));
+// router.get('/company/:companyId/filtered', protect, (req, res) => res.status(501).json({ message: 'Not implemented' }));
 
 module.exports = router;

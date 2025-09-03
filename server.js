@@ -9,6 +9,8 @@ const storyRoutes = require('./routes/storyRoutes');
 const countryRoutes = require('./routes/countryRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const usermanageRoutes = require('./routes/usermanageRoutes');
+const companyRoutes = require('./routes/companyRoutes');
+const applicationRoutes = require('./routes/applicationRoutes');
 
 dotenv.config();
 connectDB();
@@ -16,7 +18,7 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
 }));
 
 app.use(express.json());
@@ -24,11 +26,9 @@ app.use(express.json());
 // Routes
 app.use('/api/v1/auth', require('./routes/authRoutes'));
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
 app.use('/api/v1/jobs', jobRoutes);
+app.use('/api/v1/companies', companyRoutes);
+app.use('/api/v1/applications', applicationRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/migrations', migrationRoutes);
 app.use('/api/v1/stories', storyRoutes);
@@ -36,6 +36,9 @@ app.use('/api/v1/countries', countryRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/dashboard', require('./routes/adminRoutes'));
 app.use('/api/v1/usermanage', usermanageRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Test route (keep last)
 app.get('/', (req, res) => {

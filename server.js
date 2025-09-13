@@ -18,9 +18,24 @@ connectDB();
 const app = express();
 
 
+/*
+app.use(cors({
+     origin:  'http://localhost:3000',
+}));
+*/
+const allowedOrigins = process.env.FRONTEND_URLS?.split(",") || [];
 
 app.use(cors({
-     origin: process.env.FRONTEND_URL ,
+  origin: (origin, callback) => {
+    // allow REST tools (like Postman) with no origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.error("Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
 app.use(express.json());

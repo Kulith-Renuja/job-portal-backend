@@ -1,22 +1,30 @@
 const express = require('express');
+const router = express.Router();
 const {
   getJobs,
+  getCompanyJobs,
   createJob,
   updateJob,
   deleteJob
 } = require('../controllers/jobController');
-const { protect, admin } = require('../middleware/authMiddleware');
-const router = express.Router();
 
-// Public
-router.route('/').get(getJobs);
+const { protect } = require('../middleware/authMiddleware');
+const { protectUniversal } = require('../middleware/universalProtect');
+const { protectCompany } = require('../middleware/companyAuth');
 
-// Admin Only
-router.route('/')
-  .post(protect, admin, createJob);
+// Public route
+router.get('/', getJobs);
 
-router.route('/:id')
-  .put(protect, admin, updateJob)
-  .delete(protect, admin, deleteJob);
+// Company-only jobs (Company or Admin)
+router.get('/company/:companyId', protectUniversal, getCompanyJobs);
+
+// Create job (company or admin)
+router.post('/', protectUniversal , createJob);
+
+// Update job (Admin only)
+router.put('/:id', protect, updateJob);
+
+// Delete job (Company or Admin)
+router.delete('/:id', protectUniversal, deleteJob);
 
 module.exports = router;

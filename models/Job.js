@@ -1,44 +1,107 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const jobSchema = new mongoose.Schema(
+const jobSchema = new Schema(
   {
+    jobId: {
+      type: String,
+      unique: true,
+      default: function () {
+        // Auto-generate job ID like JOB-<shortid>
+        return 'JOB-' + new mongoose.Types.ObjectId().toString().slice(-6).toUpperCase();
+      },
+    },
+
     title: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
-    place: {
-      type: String,
-    },
-    company: {
-      type: String,
-    },
+
     category: {
       type: String,
-      required: true
+      required: true,
     },
-    content: {
-      type: String,
-      required: true
-    },
-    image: {
-      type: String // URL or file path
-    },
-    salary: {
-      type: Number, // or String if you want 'Negotiable'
-      default: null
-    },
+
     jobType: {
-      type: String, // e.g., 'Full-time', 'Part-time', 'Internship'
-      enum: ['Full-time', 'Part-time', 'Internship', 'Contract'],
-      default: 'Full-time'
+      type: String,
     },
+
+    description: {
+      type: String,
+    },
+
+    locationType: {
+      type: String,
+      enum: ['Sri Lanka', 'Overseas'],
+      default: 'Sri Lanka',
+    },
+
+    district: {
+      type: String,
+    },
+
+    city: {
+      type: String,
+    },
+
+    country: {
+      type: String,
+    },
+
+    salary: {
+      type: String,
+    },
+
+    educationLevel: {
+      type: String,
+    },
+
+    qualificationLevel: {
+      type: [String], // array of strings
+      default: [],
+    },
+
+    rolesAndResponsibilities: {
+      type: [String],
+      default: [],
+    },
+
+    languages: {
+      type: [String],
+      default: [],
+    },
+
     deadline: {
-      type: Date
-    }
+      type: Date,
+      default: function () {
+        const oneMonthLater = new Date();
+        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+        return oneMonthLater;
+      },
+    },
+
+    email: {
+      type: String, // company or custom email for CVs
+    },
+
+    image: {
+      type: String, // image URL or file path
+    },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Company',
+      required: false,
+    },
+
+    companyName: {
+      type: String,
+      trim: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
